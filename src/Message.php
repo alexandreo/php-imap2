@@ -162,8 +162,9 @@ class Message
         #$client->setDebug(true);
 
         $isUid = boolval($flags & FT_UID);
+        $isPeek = ($flags & FT_PEEK) ? ".PEEK": "";
 
-        $messages = $client->fetch($imap->getMailboxName(), $messageNum, $isUid, ['BODY[TEXT]']);
+        $messages = $client->fetch($imap->getMailboxName(), $messageNum, $isUid, ['BODY'.$isPeek.'[TEXT]']);
 
         return $messages[$messageNum]->bodypart['TEXT'];
     }
@@ -317,14 +318,18 @@ class Message
         $client = $imap->getClient();
         #$client->setDebug(true);
 
+        $isPeek = ($flags & FT_PEEK) ? ".PEEK": "";
+
+
         $messages = $client->fetch($imap->getMailboxName(), $sequence, false, [
-            'BODY[HEADER.FIELDS (SUBJECT FROM TO CC REPLYTO MESSAGEID DATE SIZE REFERENCES)]',
+            "BODY{$isPeek}[HEADER.FIELDS (SUBJECT FROM TO CC REPLYTO MESSAGEID DATE SIZE REFERENCES)]",
             'UID',
             'FLAGS',
             'INTERNALDATE',
             'RFC822.SIZE',
             'ENVELOPE',
-            'RFC822.HEADER'
+            'RFC822.HEADER',
+            'BODY'.$isPeek.'[TEXT]'
         ]);
 
         if ($sequence != '*' && count($messages) < Functions::expectedNumberOfMessages($sequence)) {
