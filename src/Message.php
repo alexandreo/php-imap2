@@ -78,8 +78,10 @@ class Message
         $client = $imap->getClient();
         #$client->setDebug(true);
 
+        $isPeek = ($flags & FT_PEEK) ? ".PEEK": "";
+
         $messages = $client->fetch($imap->getMailboxName(), $messageNum, false, [
-            'BODY.PEEK[HEADER.FIELDS (SUBJECT FROM TO CC REPLY-TO DATE SIZE REFERENCES)]',
+            "BODY.PEEK[HEADER.FIELDS (SUBJECT FROM TO CC REPLY-TO DATE SIZE REFERENCES)]",
             'ENVELOPE',
             'INTERNALDATE',
             'UID',
@@ -162,9 +164,8 @@ class Message
         #$client->setDebug(true);
 
         $isUid = boolval($flags & FT_UID);
-        $isPeek = ($flags & FT_PEEK) ? ".PEEK": "";
 
-        $messages = $client->fetch($imap->getMailboxName(), $messageNum, $isUid, ['BODY'.$isPeek.'[TEXT]']);
+        $messages = $client->fetch($imap->getMailboxName(), $messageNum, $isUid, ['BODY.PEEK[TEXT]']);
 
         return $messages[$messageNum]->bodypart['TEXT'];
     }
@@ -179,7 +180,8 @@ class Message
         #$client->setDebug(true);
 
         $isUid = boolval($flags & FT_UID);
-        $messages = $client->fetch($imap->getMailboxName(), $messageNum, $isUid, ['BODY['.$section.']']);
+        $isPeek = ($flags & FT_PEEK) ? ".PEEK": "";
+        $messages = $client->fetch($imap->getMailboxName(), $messageNum, $isUid, ['BODY.PEEK['.$section.']']);
 
         if (empty($messages)) {
             trigger_error(Errors::badMessageNumber(debug_backtrace(), 1), E_USER_WARNING);
@@ -212,7 +214,7 @@ class Message
         $isUid = boolval($flags & FT_UID);
 
         $sectionKey = $section.'.MIME';
-        $messages = $client->fetch($imap->getMailboxName(), $messageNum, $isUid, ['BODY['.$sectionKey.']']);
+        $messages = $client->fetch($imap->getMailboxName(), $messageNum, $isUid, ['BODY.PEEK['.$sectionKey.']']);
 
         if (empty($messages)) {
             return "";
@@ -231,7 +233,7 @@ class Message
             $client = $imap->getClient();
             #$client->setDebug(true);
 
-            $messages = $client->fetch($imap->getMailboxName(), $messageNum, false, ['BODY['.$section.']']);
+            $messages = $client->fetch($imap->getMailboxName(), $messageNum, false, ['BODY.PEEK['.$section.']']);
 
             $body = $section ? $messages[$messageNum]->bodypart[$section] : $messages[$messageNum]->body;
 
@@ -272,7 +274,7 @@ class Message
         $client = $imap->getClient();
         #$client->setDebug(true);
 
-        $messages = $client->fetch($imap->getMailboxName(), $messageNum, false, ['BODY['.$section.']']);
+        $messages = $client->fetch($imap->getMailboxName(), $messageNum, false, ['BODY.PEEK['.$section.']']);
 
         if ($section) {
             return $messages[$messageNum]->bodypart[$section];
@@ -298,7 +300,7 @@ class Message
 
         $isUid = boolval($flags & FT_UID);
 
-        $messages = $client->fetch($imap->getMailboxName(), $messageNum, $isUid, ['BODY[HEADER]']);
+        $messages = $client->fetch($imap->getMailboxName(), $messageNum, $isUid, ['BODY.PEEK[HEADER]']);
 
         if (empty($messages)) {
             return false;
@@ -328,8 +330,7 @@ class Message
             'INTERNALDATE',
             'RFC822.SIZE',
             'ENVELOPE',
-            'RFC822.HEADER',
-            'BODY'.$isPeek.'[TEXT]'
+            'RFC822.HEADER'
         ]);
 
         if ($sequence != '*' && count($messages) < Functions::expectedNumberOfMessages($sequence)) {
